@@ -54,9 +54,10 @@
       "verified": false,
       "base_url": "https://magicmadhouse.co.uk",
       "listing_urls": [
-        "https://magicmadhouse.co.uk"
+        "https://magicmadhouse.co.uk/pokemon",
+        "https://magicmadhouse.co.uk/pokemon/all-pokemon-sets/swsh-evolving-skies/"
       ],
-      "product_url_pattern": "/[a-z0-9-]+\\.html"
+      "product_url_pattern": "$this-should-match-nothing-yet^"
     }
   ],
   "in_stock_keywords": ["add to basket", "add to cart", "in stock", "buy now"],
