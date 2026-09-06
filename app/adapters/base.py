@@ -183,12 +183,42 @@ def fetch_rendered(url: str, timeout_ms: int = 25000) -> Optional[str]:
         try:
             page = context.new_page()
             page.goto(url, timeout=timeout_ms, wait_until="networkidle")
+            _dismiss_cookie_banner(page)
+            page.wait_for_load_state("networkidle", timeout=10000)
             return page.content()
         finally:
             context.close()
     except Exception:
         logger.warning("Playwright render failed for %s", url, exc_info=True)
         return None
+
+
+_COOKIE_CONSENT_SELECTORS = [
+    "text=/^Accept all cookies$/i",
+    "text=/^Accept all$/i",
+    "text=/^Accept cookies$/i",
+    "text=/^I accept$/i",
+    "text=/^Accept$/i",
+    "#onetrust-accept-btn-handler",
+    "button[aria-label='Accept all cookies']",
+]
+
+
+def _dismiss_cookie_banner(page) -> None:
+    """Click through a cookie-consent banner if one is present.
+
+    Ordinary, expected site interaction (the same click any visitor makes),
+    not a bot-protection workaround -- many sites don't render/hydrate the
+    rest of the page until the consent dialog is dismissed.
+    """
+    for selector in _COOKIE_CONSENT_SELECTORS:
+        try:
+            locator = page.locator(selector).first
+            if locator.is_visible(timeout=1500):
+                locator.click(timeout=1500)
+                return
+        except Exception:
+            continue
 
 
 class GenericAdapter:
