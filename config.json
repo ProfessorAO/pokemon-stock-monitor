@@ -62,12 +62,14 @@
     {
       "name": "the_card_vault",
       "enabled": true,
-      "verified": false,
+      "verified": true,
       "base_url": "https://thecardvault.co.uk",
       "listing_urls": [
-        "https://thecardvault.co.uk"
+        "https://thecardvault.co.uk/collections/pokemon-tcg-all-products",
+        "https://thecardvault.co.uk/collections/pokemon-tcg-sealed-products",
+        "https://thecardvault.co.uk/collections/pokemon-new-releases"
       ],
-      "product_url_pattern": "$this-should-match-nothing-yet^"
+      "product_url_pattern": "^/products/[a-z0-9-]+$"
     },
     {
       "name": "chaos_cards",

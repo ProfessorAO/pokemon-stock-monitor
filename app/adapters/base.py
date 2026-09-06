@@ -396,9 +396,11 @@ class GenericAdapter:
                     logger.warning(
                         "%s: product_url_pattern matched nothing on %s; %d total link paths, "
                         "%d look pokemon/tcg-related (%d mention pokemon specifically), "
-                        "%d not in known nav categories; pokemon-specific sample: %s",
+                        "%d not in known nav categories; pokemon-specific sample: %s; "
+                        "all paths (only shown when few): %s",
                         self.name, listing_url, len(all_paths), len(interesting),
                         len(pokemon_specific), len(unrecognized), pokemon_specific[:100],
+                        sorted(all_paths) if len(all_paths) <= 10 else "(too many, omitted)",
                     )
         return sorted(found)
 
