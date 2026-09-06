@@ -390,12 +390,15 @@ class GenericAdapter:
                         p for p in all_paths
                         if re.search(r"pok[eé]mon|tcg|trading-card", p, re.I)
                     )
+                    pokemon_specific = sorted(
+                        p for p in all_paths if re.search(r"pok[eé]mon", p, re.I)
+                    )
                     logger.warning(
                         "%s: product_url_pattern matched nothing on %s; %d total link paths, "
-                        "%d look pokemon/tcg-related, %d not in known nav categories; "
-                        "pokemon-related sample: %s; unrecognized sample: %s",
-                        self.name, listing_url, len(all_paths), len(interesting), len(unrecognized),
-                        interesting[:40], unrecognized[:60],
+                        "%d look pokemon/tcg-related (%d mention pokemon specifically), "
+                        "%d not in known nav categories; pokemon-specific sample: %s",
+                        self.name, listing_url, len(all_paths), len(interesting),
+                        len(pokemon_specific), len(unrecognized), pokemon_specific[:100],
                     )
         return sorted(found)
 

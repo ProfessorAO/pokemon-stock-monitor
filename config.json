@@ -73,6 +73,7 @@
       "name": "chaos_cards",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://www.chaoscards.co.uk",
       "listing_urls": [
         "https://www.chaoscards.co.uk"
