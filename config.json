@@ -52,6 +52,7 @@
       "name": "magic_madhouse",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://magicmadhouse.co.uk",
       "listing_urls": [
         "https://magicmadhouse.co.uk/pokemon",
