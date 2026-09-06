@@ -3,8 +3,11 @@ from __future__ import annotations
 import httpx
 
 from .argos import ArgosAdapter
+from .aurora_sparks import AuroraSparksAdapter
 from .base import GenericAdapter, ProductRecord, RateLimiter, RobotsCache
+from .cardcaptain import CardCaptainAdapter
 from .chaos_cards import ChaosCardsAdapter
+from .eterna_cards import EternaCardsAdapter
 from .game import GameAdapter
 from .magic_madhouse import MagicMadhouseAdapter
 from .pokemon_center import PokemonCenterAdapter
@@ -19,6 +22,9 @@ ADAPTER_REGISTRY: dict[str, type[GenericAdapter]] = {
     "magic_madhouse": MagicMadhouseAdapter,
     "the_card_vault": TheCardVaultAdapter,
     "chaos_cards": ChaosCardsAdapter,
+    "eterna_cards": EternaCardsAdapter,
+    "cardcaptain": CardCaptainAdapter,
+    "aurora_sparks": AuroraSparksAdapter,
 }
 
 

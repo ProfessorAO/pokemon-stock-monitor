@@ -81,6 +81,40 @@
         "https://www.chaoscards.co.uk"
       ],
       "product_url_pattern": "$this-should-match-nothing-yet^"
+    },
+    {
+      "name": "eterna_cards",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://eternacards.co.uk",
+      "listing_urls": [
+        "https://eternacards.co.uk/collections/pokemon-tcg-sealed-products"
+      ],
+      "product_url_pattern": "^/products/[a-z0-9-]+$"
+    },
+    {
+      "name": "cardcaptain",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://cardcaptain.myshopify.com",
+      "listing_urls": [
+        "https://cardcaptain.myshopify.com",
+        "https://cardcaptain.myshopify.com/collections/pokemon",
+        "https://cardcaptain.myshopify.com/collections/pokemon-tcg"
+      ],
+      "product_url_pattern": "^/products/[a-z0-9-]+$"
+    },
+    {
+      "name": "aurora_sparks",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://aurorasparks.myshopify.com",
+      "listing_urls": [
+        "https://aurorasparks.myshopify.com",
+        "https://aurorasparks.myshopify.com/collections/pokemon",
+        "https://aurorasparks.myshopify.com/collections/pokemon-tcg"
+      ],
+      "product_url_pattern": "^/products/[a-z0-9-]+$"
     }
   ],
   "in_stock_keywords": ["add to basket", "add to cart", "in stock", "buy now"],
