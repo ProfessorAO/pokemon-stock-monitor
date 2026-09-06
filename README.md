@@ -86,18 +86,34 @@ override `discover()`/`check()` in its adapter subclass under `app/adapters/`.
 
 ## Known limitations
 
-- **Listing URLs and patterns are unverified.** This sandbox's network policy
-  blocks outbound requests to retailer sites, so the `listing_urls` and
-  `product_url_pattern` values in `config.json` are best-effort and will need
-  checking/adjusting against the real pages once deployed. Each retailer entry
-  has a `"verified": false` flag as a reminder — flip it once you've confirmed
-  discovery actually finds real products for that site.
-- **JavaScript-rendered storefronts.** If a retailer's listing or product page
-  renders its content client-side (common on modern React/Vue storefronts),
-  a plain HTTP fetch won't see the product data and that adapter will find
-  nothing. The fix is either an official API/feed for that retailer, or
-  swapping in a headless-browser fetch (e.g. Playwright) for that adapter
-  specifically — not included here to keep the deployed service lightweight.
+- **Pokémon Center, Smyths, Argos, and GAME are disabled** (`"enabled": false`
+  in `config.json`). Confirmed live against the deployed service, including
+  through a rendered headless browser (not just a plain HTTP client):
+  - Pokémon Center and Smyths both return an **Incapsula** bot-mitigation
+    block page ("Request unsuccessful. Incapsula incident ID: ...").
+  - Argos returns an **Akamai** "Access Denied" page.
+  - GAME's connection fails at the TLS/HTTP2 protocol level
+    (`net::ERR_HTTP2_PROTOCOL_ERROR`), consistent with the same kind of
+    active mitigation.
+
+  These are real, active anti-bot systems working as intended, not a
+  User-Agent check or a wrong selector. Per this project's boundary (no
+  CAPTCHA/bot-protection bypass), nothing further has been attempted against
+  them — no stealth/fingerprint-spoofing, no proxy rotation, no crawler
+  impersonation. Each retailer entry carries a `blocked_reason` field
+  explaining what was found. The realistic paths forward are an official
+  API/affiliate feed for that retailer, or accepting they can't be
+  automated and checking them manually. Flip `"enabled": true` (and clear
+  `blocked_reason`) only if one of those changes.
+- **Magic Madhouse works** — its listing pages are plain server-rendered
+  HTML with no bot protection encountered so far. `product_url_pattern`
+  still needs a final pass against its real product URL structure (see the
+  `stock_monitor.adapters` warning logs for the actual link paths found).
+- **`"render": true`** on a retailer config renders that page with headless
+  Chromium (`app/adapters/base.py:fetch_rendered`) instead of a plain HTTP
+  GET — for pages that return real content but need JS execution to show it.
+  It is plain headless rendering with no stealth patches, so it does nothing
+  to get past a site that's actively refusing automated clients (see above).
 - **Release dates** are extracted with a best-effort regex over page text
   (`extract_release_date_text` in `app/adapters/base.py`) and stored as raw
   text, not a parsed date — treat it as a hint to verify, not a guarantee.

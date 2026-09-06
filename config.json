@@ -2,8 +2,9 @@
   "retailers": [
     {
       "name": "pokemon_center",
-      "enabled": true,
+      "enabled": false,
       "verified": false,
+      "blocked_reason": "Confirmed live: Incapsula bot-mitigation block page, even against a rendered headless browser. Not pursuing further (see README boundary). Re-enable if an official API/feed becomes available.",
       "render": true,
       "base_url": "https://www.pokemoncenter.com",
       "listing_urls": [
@@ -13,8 +14,9 @@
     },
     {
       "name": "smyths",
-      "enabled": true,
+      "enabled": false,
       "verified": false,
+      "blocked_reason": "Confirmed live: Incapsula bot-mitigation block page, even against a rendered headless browser. Not pursuing further (see README boundary). Re-enable if an official API/feed becomes available.",
       "render": true,
       "base_url": "https://www.smythstoys.com",
       "listing_urls": [
@@ -24,8 +26,9 @@
     },
     {
       "name": "argos",
-      "enabled": true,
+      "enabled": false,
       "verified": false,
+      "blocked_reason": "Confirmed live: Akamai 'Access Denied' page, even against a rendered headless browser. Not pursuing further (see README boundary). Re-enable if an official API/feed becomes available.",
       "render": true,
       "base_url": "https://www.argos.co.uk",
       "listing_urls": [
@@ -35,8 +38,9 @@
     },
     {
       "name": "game",
-      "enabled": true,
+      "enabled": false,
       "verified": false,
+      "blocked_reason": "Confirmed live: connection fails at the TLS/HTTP2 protocol level even against a rendered headless browser, consistent with active bot-mitigation. Not pursuing further (see README boundary). Re-enable if an official API/feed becomes available.",
       "render": true,
       "base_url": "https://www.game.co.uk",
       "listing_urls": [

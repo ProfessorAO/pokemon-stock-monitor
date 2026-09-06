@@ -275,7 +275,7 @@ class GenericAdapter:
                         p for p in all_paths
                         if re.search(r"pok[eé]mon|tcg|trading-card", p, re.I)
                     )
-                    sample = interesting[:25] if interesting else sorted(all_paths)[:25]
+                    sample = interesting[:80] if interesting else sorted(all_paths)[:25]
                     logger.warning(
                         "%s: product_url_pattern matched nothing on %s; %d total link paths, "
                         "%d look pokemon/tcg-related; sample: %s",
