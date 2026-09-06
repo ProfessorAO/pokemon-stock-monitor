@@ -85,7 +85,7 @@
     {
       "name": "eterna_cards",
       "enabled": true,
-      "verified": false,
+      "verified": true,
       "base_url": "https://eternacards.co.uk",
       "listing_urls": [
         "https://eternacards.co.uk/collections/pokemon-tcg-sealed-products"
@@ -95,12 +95,10 @@
     {
       "name": "cardcaptain",
       "enabled": true,
-      "verified": false,
+      "verified": true,
       "base_url": "https://cardcaptain.myshopify.com",
       "listing_urls": [
-        "https://cardcaptain.myshopify.com",
-        "https://cardcaptain.myshopify.com/collections/pokemon",
-        "https://cardcaptain.myshopify.com/collections/pokemon-tcg"
+        "https://cardcaptain.myshopify.com"
       ],
       "product_url_pattern": "^/products/[a-z0-9-]+$"
     },
