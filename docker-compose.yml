@@ -1,0 +1,17 @@
+services:
+  stock-monitor:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_PATH=/app/data/stock_monitor.db
+      - POLLING_INTERVAL_SECONDS=${POLLING_INTERVAL_SECONDS:-300}
+      - MIN_REQUEST_DELAY_SECONDS=${MIN_REQUEST_DELAY_SECONDS:-5}
+      - MIN_MARGIN_PERCENT=${MIN_MARGIN_PERCENT:-15}
+      - DEFAULT_VEND_MULTIPLIER=${DEFAULT_VEND_MULTIPLIER:-1.4}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
+      - TWILIO_TO_NUMBER=${TWILIO_TO_NUMBER:-}
+    volumes:
+      - ./data:/app/data

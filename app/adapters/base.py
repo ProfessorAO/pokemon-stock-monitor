@@ -1,0 +1,246 @@
+from __future__ import annotations
+
+import json
+import re
+import time
+from dataclasses import dataclass
+from typing import Optional
+from urllib.parse import urljoin, urlparse
+from urllib import robotparser
+
+import httpx
+from bs4 import BeautifulSoup
+
+USER_AGENT = "PokemonStockMonitorBot/0.2 (+read-only stock check; contact via operator)"
+
+PRICE_RE = re.compile(r"\d+(?:[.,]\d{1,2})?")
+
+RELEASE_DATE_PATTERNS = [
+    re.compile(r"release\s*date[:\-]?\s*([0-9]{1,2}[\/\-.][0-9]{1,2}[\/\-.][0-9]{2,4})", re.I),
+    re.compile(r"release\s*date[:\-]?\s*([A-Za-z]+\s+\d{1,2},?\s+\d{4})", re.I),
+    re.compile(r"releas(?:es|ing)\s+on\s+([A-Za-z0-9,\s]{6,25})", re.I),
+    re.compile(r"available\s+from\s+([0-9]{1,2}[\/\-.][0-9]{1,2}[\/\-.][0-9]{2,4})", re.I),
+]
+
+
+@dataclass
+class ProductRecord:
+    retailer: str
+    sku: str
+    name: str
+    url: str
+    price: Optional[float]
+    available: bool
+    release_date_text: Optional[str] = None
+    error: Optional[str] = None
+
+
+def parse_price(text: Optional[str]) -> Optional[float]:
+    if not text:
+        return None
+    match = PRICE_RE.search(text.replace(",", ""))
+    if not match:
+        return None
+    try:
+        return float(match.group(0))
+    except ValueError:
+        return None
+
+
+def extract_release_date_text(text: str) -> Optional[str]:
+    for pattern in RELEASE_DATE_PATTERNS:
+        m = pattern.search(text)
+        if m:
+            return m.group(0).strip()
+    return None
+
+
+def extract_jsonld_products(soup: BeautifulSoup) -> list[dict]:
+    results: list[dict] = []
+    for tag in soup.find_all("script", type="application/ld+json"):
+        try:
+            data = json.loads(tag.string or "")
+        except (TypeError, ValueError):
+            continue
+        candidates = list(data) if isinstance(data, list) else [data]
+        for item in candidates:
+            if not isinstance(item, dict):
+                continue
+            graph = item.get("@graph")
+            if isinstance(graph, list):
+                candidates.extend(g for g in graph if isinstance(g, dict))
+            item_type = item.get("@type")
+            if item_type == "Product" or (isinstance(item_type, list) and "Product" in item_type):
+                results.append(item)
+    return results
+
+
+class RateLimiter:
+    """Enforces a minimum delay between requests to the same host."""
+
+    def __init__(self, min_delay_seconds: float):
+        self.min_delay = min_delay_seconds
+        self._last_request_at: dict[str, float] = {}
+
+    def wait(self, host: str) -> None:
+        last = self._last_request_at.get(host)
+        now = time.monotonic()
+        if last is not None:
+            elapsed = now - last
+            if elapsed < self.min_delay:
+                time.sleep(self.min_delay - elapsed)
+        self._last_request_at[host] = time.monotonic()
+
+
+class RobotsCache:
+    """Caches robots.txt per host and refuses to fetch disallowed paths."""
+
+    def __init__(self):
+        self._parsers: dict[str, Optional[robotparser.RobotFileParser]] = {}
+
+    def allowed(self, url: str) -> bool:
+        parsed = urlparse(url)
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+        parser = self._parsers.get(origin)
+        if origin not in self._parsers:
+            parser = robotparser.RobotFileParser()
+            parser.set_url(urljoin(origin, "/robots.txt"))
+            try:
+                parser.read()
+            except Exception:
+                parser = None
+            self._parsers[origin] = parser
+        if parser is None:
+            return True
+        try:
+            return parser.can_fetch(USER_AGENT, url)
+        except Exception:
+            return True
+
+
+class GenericAdapter:
+    """
+    Config-driven retailer adapter.
+
+    Discovery finds candidate product URLs on a listing/search page by matching
+    links against a per-retailer URL pattern (site markup/CSS classes change too
+    often to hardcode reliably). Monitoring reads each product page's JSON-LD
+    Product schema first (name/price/availability), falling back to keyword
+    scanning of visible text when a site doesn't expose structured data.
+    """
+
+    def __init__(
+        self,
+        retailer_config: dict,
+        client: httpx.Client,
+        rate_limiter: RateLimiter,
+        robots: RobotsCache,
+        in_stock_keywords: list[str],
+        out_of_stock_keywords: list[str],
+    ):
+        self.config = retailer_config
+        self.name = retailer_config["name"]
+        self.base_url = retailer_config["base_url"]
+        self.client = client
+        self.rate_limiter = rate_limiter
+        self.robots = robots
+        self.in_stock_keywords = in_stock_keywords
+        self.out_of_stock_keywords = out_of_stock_keywords
+        self.product_url_pattern = re.compile(retailer_config["product_url_pattern"])
+
+    def fetch(self, url: str) -> Optional[str]:
+        if not self.robots.allowed(url):
+            return None
+        host = urlparse(url).netloc
+        self.rate_limiter.wait(host)
+        try:
+            response = self.client.get(
+                url, headers={"User-Agent": USER_AGENT}, timeout=20, follow_redirects=True
+            )
+        except httpx.HTTPError:
+            return None
+        if response.status_code in (401, 403, 429) or response.status_code >= 500:
+            return None
+        if response.status_code >= 400:
+            return None
+        return response.text
+
+    def discover(self) -> list[str]:
+        """Return candidate product page URLs found on the configured listing pages."""
+        found: set[str] = set()
+        for listing_url in self.config.get("listing_urls", []):
+            html = self.fetch(listing_url)
+            if not html:
+                continue
+            soup = BeautifulSoup(html, "lxml")
+            for a in soup.find_all("a", href=True):
+                href = a["href"]
+                absolute = urljoin(self.base_url, href)
+                path = urlparse(absolute).path
+                if self.product_url_pattern.search(path):
+                    found.add(absolute.split("?")[0].split("#")[0])
+        return sorted(found)
+
+    def check(self, url: str) -> ProductRecord:
+        html = self.fetch(url)
+        if html is None:
+            return ProductRecord(
+                retailer=self.name, sku=url, name=url, url=url,
+                price=None, available=False, error="fetch_blocked_or_failed",
+            )
+
+        soup = BeautifulSoup(html, "lxml")
+        page_text = soup.get_text(" ", strip=True)
+
+        name = None
+        price = None
+        available = None
+        sku = None
+
+        for product in extract_jsonld_products(soup):
+            name = name or product.get("name")
+            sku = sku or product.get("sku") or product.get("productID") or product.get("gtin13")
+            offers = product.get("offers")
+            if isinstance(offers, list):
+                offers = offers[0] if offers else None
+            if isinstance(offers, dict):
+                if price is None:
+                    price = parse_price(str(offers.get("price"))) if offers.get("price") is not None else None
+                availability = str(offers.get("availability", ""))
+                if availability:
+                    available = "instock" in availability.lower()
+            if name and price is not None and available is not None:
+                break
+
+        if not name:
+            title_tag = soup.find("title")
+            name = title_tag.get_text(strip=True) if title_tag else url
+
+        if not sku:
+            sku = urlparse(url).path.strip("/").split("/")[-1] or url
+
+        if available is None:
+            lowered = page_text.lower()
+            has_out_of_stock = any(k in lowered for k in self.out_of_stock_keywords)
+            has_in_stock = any(k in lowered for k in self.in_stock_keywords)
+            if has_out_of_stock:
+                available = False
+            elif has_in_stock:
+                available = True
+            else:
+                available = False
+
+        if price is None:
+            price = parse_price(page_text)
+
+        release_date_text = extract_release_date_text(page_text)
+
+        return ProductRecord(
+            retailer=self.name,
+            sku=str(sku),
+            name=name,
+            url=url,
+            price=price,
+            available=bool(available),
+            release_date_text=release_date_text,
+        )
