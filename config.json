@@ -4,6 +4,7 @@
       "name": "pokemon_center",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://www.pokemoncenter.com",
       "listing_urls": [
         "https://www.pokemoncenter.com/category/trading-card-game"
@@ -14,6 +15,7 @@
       "name": "smyths",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://www.smythstoys.com",
       "listing_urls": [
         "https://www.smythstoys.com/uk/en-gb/search?text=pokemon%20tcg"
@@ -24,6 +26,7 @@
       "name": "argos",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://www.argos.co.uk",
       "listing_urls": [
         "https://www.argos.co.uk/search/pokemon-trading-cards/"
@@ -34,6 +37,7 @@
       "name": "game",
       "enabled": true,
       "verified": false,
+      "render": true,
       "base_url": "https://www.game.co.uk",
       "listing_urls": [
         "https://www.game.co.uk/en/search/?q=pokemon+tcg"
@@ -44,9 +48,9 @@
       "name": "magic_madhouse",
       "enabled": true,
       "verified": false,
-      "base_url": "https://www.magicmadhouse.co.uk",
+      "base_url": "https://magicmadhouse.co.uk",
       "listing_urls": [
-        "https://www.magicmadhouse.co.uk/catalogsearch/result/?q=pokemon"
+        "https://magicmadhouse.co.uk"
       ],
       "product_url_pattern": "/[a-z0-9-]+\\.html"
     }

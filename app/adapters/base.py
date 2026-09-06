@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -136,6 +137,60 @@ class RobotsCache:
             return True
 
 
+_playwright_ctx = None
+_browser = None
+_browser_lock = threading.Lock()
+
+
+def _get_browser():
+    """Lazily starts a single shared headless Chromium instance for the process.
+
+    Plain headless rendering only -- no stealth/fingerprint-spoofing plugins.
+    This exists to execute client-side JS on pages that don't block us (they
+    return 200 OK, they just render content in the browser), not to get past
+    sites that are actively refusing requests.
+    """
+    global _playwright_ctx, _browser
+    with _browser_lock:
+        if _browser is None:
+            from playwright.sync_api import sync_playwright
+
+            ctx = sync_playwright().start()
+            try:
+                _browser = ctx.chromium.launch(headless=True)
+                _playwright_ctx = ctx
+            except Exception:
+                # Don't leave a dangling driver connection -- a failed launch
+                # would otherwise permanently break every later attempt in
+                # this process with "Please use the Async API instead."
+                try:
+                    ctx.stop()
+                except Exception:
+                    pass
+                raise
+        return _browser
+
+
+def fetch_rendered(url: str, timeout_ms: int = 25000) -> Optional[str]:
+    try:
+        browser = _get_browser()
+    except Exception:
+        logger.exception("Could not start Playwright/Chromium")
+        return None
+
+    try:
+        context = browser.new_context(user_agent=USER_AGENT)
+        try:
+            page = context.new_page()
+            page.goto(url, timeout=timeout_ms, wait_until="networkidle")
+            return page.content()
+        finally:
+            context.close()
+    except Exception:
+        logger.warning("Playwright render failed for %s", url, exc_info=True)
+        return None
+
+
 class GenericAdapter:
     """
     Config-driven retailer adapter.
@@ -171,6 +226,10 @@ class GenericAdapter:
             return None
         host = urlparse(url).netloc
         self.rate_limiter.wait(host)
+
+        if self.config.get("render"):
+            return fetch_rendered(url)
+
         try:
             response = self.client.get(
                 url, headers={"User-Agent": USER_AGENT}, timeout=20, follow_redirects=True
