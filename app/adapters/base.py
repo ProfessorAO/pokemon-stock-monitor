@@ -179,7 +179,11 @@ def fetch_rendered(url: str, timeout_ms: int = 25000) -> Optional[str]:
         return None
 
     try:
-        context = browser.new_context(user_agent=USER_AGENT)
+        # Chromium's own default UA, not our custom "...Bot..." string used for
+        # plain HTTP identification -- this is a real browser engine either way,
+        # just not one whose UA a site's front-end JS can string-match on "bot"
+        # to decide whether to load a widget.
+        context = browser.new_context()
         try:
             page = context.new_page()
             page.goto(url, timeout=timeout_ms, wait_until="networkidle")
