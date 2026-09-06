@@ -115,6 +115,17 @@
         "https://aurorasparks.myshopify.com/collections/pokemon-tcg"
       ],
       "product_url_pattern": "^/products/[a-z0-9-]+$"
+    },
+    {
+      "name": "john_lewis",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://www.johnlewis.com",
+      "listing_urls": [
+        "https://www.johnlewis.com/brand/pok%C3%A9mon/card-games/_/N-1z079nuZ1yze6yu",
+        "https://www.johnlewis.com/brand/pok%C3%A9mon/_/N-1z079nu"
+      ],
+      "product_url_pattern": "/p\\d+$"
     }
   ],
   "in_stock_keywords": ["add to basket", "add to cart", "in stock", "buy now"],

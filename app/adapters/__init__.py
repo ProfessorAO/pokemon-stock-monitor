@@ -9,6 +9,7 @@ from .cardcaptain import CardCaptainAdapter
 from .chaos_cards import ChaosCardsAdapter
 from .eterna_cards import EternaCardsAdapter
 from .game import GameAdapter
+from .john_lewis import JohnLewisAdapter
 from .magic_madhouse import MagicMadhouseAdapter
 from .pokemon_center import PokemonCenterAdapter
 from .smyths import SmythsAdapter
@@ -25,6 +26,7 @@ ADAPTER_REGISTRY: dict[str, type[GenericAdapter]] = {
     "eterna_cards": EternaCardsAdapter,
     "cardcaptain": CardCaptainAdapter,
     "aurora_sparks": AuroraSparksAdapter,
+    "john_lewis": JohnLewisAdapter,
 }
 
 
