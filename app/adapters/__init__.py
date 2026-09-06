@@ -26,7 +26,7 @@ def build_adapters(
 ) -> list[GenericAdapter]:
     client = httpx.Client()
     rate_limiter = RateLimiter(min_delay_seconds=min_request_delay_seconds)
-    robots = RobotsCache()
+    robots = RobotsCache(client=client)
 
     adapters: list[GenericAdapter] = []
     for retailer_config in retailer_configs:

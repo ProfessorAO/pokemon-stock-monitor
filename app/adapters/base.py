@@ -93,23 +93,38 @@ class RateLimiter:
 
 
 class RobotsCache:
-    """Caches robots.txt per host and refuses to fetch disallowed paths."""
+    """Caches robots.txt per host and refuses to fetch disallowed paths.
 
-    def __init__(self):
+    Fetches robots.txt via the shared httpx client (bounded timeout) rather
+    than urllib.robotparser's own .read(), which has no timeout and can hang
+    the worker thread indefinitely if a host stalls the connection instead
+    of refusing it.
+    """
+
+    def __init__(self, client: httpx.Client):
+        self.client = client
         self._parsers: dict[str, Optional[robotparser.RobotFileParser]] = {}
 
     def allowed(self, url: str) -> bool:
         parsed = urlparse(url)
         origin = f"{parsed.scheme}://{parsed.netloc}"
-        parser = self._parsers.get(origin)
         if origin not in self._parsers:
             parser = robotparser.RobotFileParser()
-            parser.set_url(urljoin(origin, "/robots.txt"))
             try:
-                parser.read()
+                response = self.client.get(
+                    urljoin(origin, "/robots.txt"),
+                    headers={"User-Agent": USER_AGENT},
+                    timeout=10,
+                    follow_redirects=True,
+                )
+                if response.status_code >= 400:
+                    parser = None
+                else:
+                    parser.parse(response.text.splitlines())
             except Exception:
                 parser = None
             self._parsers[origin] = parser
+        parser = self._parsers[origin]
         if parser is None:
             return True
         try:
