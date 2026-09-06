@@ -30,6 +30,8 @@ class Settings:
     in_stock_keywords: list = field(default_factory=list)
     out_of_stock_keywords: list = field(default_factory=list)
     vend_overrides: dict = field(default_factory=dict)
+    product_include_keywords: list = field(default_factory=list)
+    product_exclude_keywords: list = field(default_factory=list)
 
     @property
     def sms_enabled(self) -> bool:
@@ -49,4 +51,6 @@ def load_settings() -> Settings:
     settings.in_stock_keywords = [k.lower() for k in raw.get("in_stock_keywords", [])]
     settings.out_of_stock_keywords = [k.lower() for k in raw.get("out_of_stock_keywords", [])]
     settings.vend_overrides = raw.get("vend_overrides", {})
+    settings.product_include_keywords = [k.lower() for k in raw.get("product_include_keywords", [])]
+    settings.product_exclude_keywords = [k.lower() for k in raw.get("product_exclude_keywords", [])]
     return settings

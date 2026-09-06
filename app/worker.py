@@ -24,8 +24,23 @@ def format_alert(kind: str, record, economics) -> str:
     return "\n".join(lines)
 
 
+def _is_relevant_product(settings: Settings, name: str) -> bool:
+    """Filters out non-TCG merch (plushies, apparel, playmats, ...) that
+    discovery picks up alongside real sealed product just because it shares
+    a /products/ URL structure on the same store."""
+    lowered = name.lower()
+    if settings.product_exclude_keywords and any(k in lowered for k in settings.product_exclude_keywords):
+        return False
+    if settings.product_include_keywords and not any(k in lowered for k in settings.product_include_keywords):
+        return False
+    return True
+
+
 def process_product(settings: Settings, adapter: GenericAdapter, url: str) -> None:
     record = adapter.check(url)
+
+    if not _is_relevant_product(settings, record.name):
+        return
 
     is_new = db.upsert_product(
         retailer=record.retailer,
@@ -56,8 +71,10 @@ def process_product(settings: Settings, adapter: GenericAdapter, url: str) -> No
         )
 
     if is_new:
-        logger.info("New product detected: %s (%s)", record.name, record.url)
-        if meets_margin_threshold(economics, settings.min_margin_percent):
+        logger.info(
+            "New product detected: %s (%s) available=%s", record.name, record.url, record.available
+        )
+        if record.available and meets_margin_threshold(economics, settings.min_margin_percent):
             send_sms(settings, format_alert("New product detected", record, economics))
         return
 

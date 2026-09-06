@@ -128,5 +128,15 @@
   ],
   "in_stock_keywords": ["add to basket", "add to cart", "in stock", "buy now"],
   "out_of_stock_keywords": ["out of stock", "sold out", "unavailable", "notify me", "coming soon"],
-  "vend_overrides": {}
+  "vend_overrides": {},
+  "product_include_keywords": ["pokemon", "pokémon"],
+  "product_exclude_keywords": [
+    "plush", "blanket", "hoodie", "sweatshirt", "t-shirt", "apparel",
+    "poster", "pin badge", "enamel pin", "mug", "sticker", "playmat",
+    "sleeve", "binder", "backpack", "keychain", "socks", "vinyl figure",
+    "figure", "funko", "loungefly", "wallet", "cushion", "pyjamas",
+    "onesie", "cap", "beanie", "umbrella", "lamp", "clock", "calendar",
+    "jigsaw", "puzzle", "stationery", "notebook", "pencil case",
+    "lunch box", "water bottle", "handbag", "purse"
+  ]
 }
