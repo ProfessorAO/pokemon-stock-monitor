@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 
 from fastapi import FastAPI
@@ -8,6 +9,7 @@ from fastapi.responses import HTMLResponse
 
 from . import db
 from .config import load_settings
+from .notifier import send_sms
 from .worker import run_forever
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -18,6 +20,8 @@ app = FastAPI(title="Pokémon Stock Monitor")
 
 @app.on_event("startup")
 def start_worker() -> None:
+    if os.environ.get("TEST_SMS_ON_STARTUP", "").lower() == "true":
+        send_sms(settings, "Test alert: Twilio number verified, SMS delivery confirmed working.")
     thread = threading.Thread(target=run_forever, args=(settings,), daemon=True)
     thread.start()
 
