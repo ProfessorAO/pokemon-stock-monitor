@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import html
+import html as html_lib
 import json
 import logging
 import re
@@ -439,7 +439,7 @@ class GenericAdapter:
         if not name:
             title_tag = soup.find("title")
             name = title_tag.get_text(strip=True) if title_tag else url
-        name = html.unescape(name)
+        name = html_lib.unescape(name)
 
         if not sku:
             sku = urlparse(url).path.strip("/").split("/")[-1] or url
