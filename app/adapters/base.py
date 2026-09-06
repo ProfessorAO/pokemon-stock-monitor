@@ -209,16 +209,44 @@ def _dismiss_cookie_banner(page) -> None:
 
     Ordinary, expected site interaction (the same click any visitor makes),
     not a bot-protection workaround -- many sites don't render/hydrate the
-    rest of the page until the consent dialog is dismissed.
+    rest of the page until the consent dialog is dismissed. Many consent
+    widgets (Cookiebot, TrustArc, Quantcast) render inside an iframe, so
+    every frame is checked, not just the main page.
     """
-    for selector in _COOKIE_CONSENT_SELECTORS:
-        try:
-            locator = page.locator(selector).first
-            if locator.is_visible(timeout=1500):
-                locator.click(timeout=1500)
-                return
-        except Exception:
-            continue
+    for frame in page.frames:
+        for selector in _COOKIE_CONSENT_SELECTORS:
+            try:
+                locator = frame.locator(selector).first
+                if locator.is_visible(timeout=1000):
+                    locator.click(timeout=1000)
+                    return
+            except Exception:
+                continue
+
+
+_HYDRATION_MARKERS = [
+    "__NEXT_DATA__", "__NUXT__", "__INITIAL_STATE__", "window.__APOLLO_STATE__",
+    "application/ld+json", "shopify", "Shopify.theme",
+]
+
+
+def diagnose_static_html(client: httpx.Client, url: str) -> None:
+    """One-off diagnostic: check whether the plain (non-rendered) HTML embeds
+    a server-side hydration JSON blob that could be parsed directly instead
+    of relying on the rendered DOM -- often far more robust than scraping
+    rendered markup when a site's product grid loads client-side."""
+    try:
+        response = client.get(url, headers={"User-Agent": USER_AGENT}, timeout=20, follow_redirects=True)
+    except httpx.HTTPError:
+        return
+    if response.status_code >= 400:
+        return
+    text = response.text
+    found = [m for m in _HYDRATION_MARKERS if m.lower() in text.lower()]
+    logger.warning(
+        "%s: static HTML hydration-marker check -- length=%d, markers found=%s",
+        url, len(text), found,
+    )
 
 
 class GenericAdapter:
@@ -258,7 +286,10 @@ class GenericAdapter:
         self.rate_limiter.wait(host)
 
         if self.config.get("render"):
-            return fetch_rendered(url)
+            html = fetch_rendered(url)
+            if html is None or len(BeautifulSoup(html, "lxml").find_all("a", href=True)) < 5:
+                diagnose_static_html(self.client, url)
+            return html
 
         try:
             response = self.client.get(
