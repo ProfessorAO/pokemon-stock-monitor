@@ -50,12 +50,32 @@
     },
     {
       "name": "magic_madhouse",
-      "enabled": true,
+      "enabled": false,
       "verified": false,
-      "render": true,
+      "blocked_reason": "Not a bot block: the site's own product-detail-page (pdp) fetch request times out unreliably even in a real browser with a real session (confirmed from the user's own browser console: 'Uncaught (in promise) Exceeded timeout to send pdp request'), and the page runs 10+ third-party trackers competing for resources. Reproducing that exact race condition via headless automation is unlikely to be reliable. Revisit if the site becomes less flaky or exposes a stable feed.",
       "base_url": "https://magicmadhouse.co.uk",
       "listing_urls": [
         "https://magicmadhouse.co.uk/pokemon/all-pokemon-sets/swsh-evolving-skies/"
+      ],
+      "product_url_pattern": "$this-should-match-nothing-yet^"
+    },
+    {
+      "name": "the_card_vault",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://thecardvault.co.uk",
+      "listing_urls": [
+        "https://thecardvault.co.uk"
+      ],
+      "product_url_pattern": "$this-should-match-nothing-yet^"
+    },
+    {
+      "name": "chaos_cards",
+      "enabled": true,
+      "verified": false,
+      "base_url": "https://www.chaoscards.co.uk",
+      "listing_urls": [
+        "https://www.chaoscards.co.uk"
       ],
       "product_url_pattern": "$this-should-match-nothing-yet^"
     }

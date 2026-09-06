@@ -4,10 +4,12 @@ import httpx
 
 from .argos import ArgosAdapter
 from .base import GenericAdapter, ProductRecord, RateLimiter, RobotsCache
+from .chaos_cards import ChaosCardsAdapter
 from .game import GameAdapter
 from .magic_madhouse import MagicMadhouseAdapter
 from .pokemon_center import PokemonCenterAdapter
 from .smyths import SmythsAdapter
+from .the_card_vault import TheCardVaultAdapter
 
 ADAPTER_REGISTRY: dict[str, type[GenericAdapter]] = {
     "pokemon_center": PokemonCenterAdapter,
@@ -15,6 +17,8 @@ ADAPTER_REGISTRY: dict[str, type[GenericAdapter]] = {
     "argos": ArgosAdapter,
     "game": GameAdapter,
     "magic_madhouse": MagicMadhouseAdapter,
+    "the_card_vault": TheCardVaultAdapter,
+    "chaos_cards": ChaosCardsAdapter,
 }
 
 
