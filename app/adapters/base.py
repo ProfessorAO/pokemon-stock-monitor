@@ -185,6 +185,8 @@ def fetch_rendered(url: str, timeout_ms: int = 25000) -> Optional[str]:
             page.goto(url, timeout=timeout_ms, wait_until="networkidle")
             _dismiss_cookie_banner(page)
             page.wait_for_load_state("networkidle", timeout=10000)
+            _dismiss_popups(page)
+            page.wait_for_load_state("networkidle", timeout=10000)
             return page.content()
         finally:
             context.close()
@@ -197,10 +199,24 @@ _COOKIE_CONSENT_SELECTORS = [
     "text=/^Accept all cookies$/i",
     "text=/^Accept all$/i",
     "text=/^Accept cookies$/i",
+    "text=/^Allow all$/i",
+    "text=/^Allow selection$/i",
     "text=/^I accept$/i",
     "text=/^Accept$/i",
     "#onetrust-accept-btn-handler",
+    "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
+    "#CybotCookiebotDialogBodyButtonAccept",
     "button[aria-label='Accept all cookies']",
+]
+
+_POPUP_DISMISS_SELECTORS = [
+    "text=/^No,? thanks$/i",
+    "text=/^No thank you$/i",
+    "[aria-label='Close']",
+    "[aria-label='close']",
+    "button.mfp-close",
+    ".modal-close",
+    ".klaviyo-close-form",
 ]
 
 
@@ -222,6 +238,25 @@ def _dismiss_cookie_banner(page) -> None:
                     return
             except Exception:
                 continue
+
+
+def _dismiss_popups(page) -> None:
+    """Dismiss a marketing/newsletter popup if one is present, same reasoning
+    as the cookie banner -- ordinary interaction, not evasion. Falls back to
+    pressing Escape, which closes most modal overlays regardless of markup."""
+    for frame in page.frames:
+        for selector in _POPUP_DISMISS_SELECTORS:
+            try:
+                locator = frame.locator(selector).first
+                if locator.is_visible(timeout=1000):
+                    locator.click(timeout=1000)
+                    return
+            except Exception:
+                continue
+    try:
+        page.keyboard.press("Escape")
+    except Exception:
+        pass
 
 
 _HYDRATION_MARKERS = [
@@ -332,15 +367,27 @@ class GenericAdapter:
                         self.name, listing_url, len(html), title, snippet,
                     )
                 else:
+                    known_nav_prefixes = (
+                        "/accessories", "/other-tcgs", "/merch", "/magic-the-gathering",
+                        "/yu-gi-oh", "/funko-pop", "/tabletop-games", "/games-workshop",
+                        "/coming-soon", "/sale", "/about-us", "/accessibility",
+                        "/privacypolicy", "/login", "/wishlist", "/cart", "/climate-initiative",
+                        "/pokemon/pokemon-merch", "/pokemon/pokemon-repacks",
+                    )
+                    unrecognized = sorted(
+                        p for p in all_paths
+                        if p and p != "/" and not p.lower().startswith(known_nav_prefixes)
+                    )
                     interesting = sorted(
                         p for p in all_paths
                         if re.search(r"pok[eé]mon|tcg|trading-card", p, re.I)
                     )
-                    sample = interesting[:80] if interesting else sorted(all_paths)[:25]
                     logger.warning(
                         "%s: product_url_pattern matched nothing on %s; %d total link paths, "
-                        "%d look pokemon/tcg-related; sample: %s",
-                        self.name, listing_url, len(all_paths), len(interesting), sample,
+                        "%d look pokemon/tcg-related, %d not in known nav categories; "
+                        "pokemon-related sample: %s; unrecognized sample: %s",
+                        self.name, listing_url, len(all_paths), len(interesting), len(unrecognized),
+                        interesting[:40], unrecognized[:60],
                     )
         return sorted(found)
 
