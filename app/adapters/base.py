@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 from dataclasses import dataclass
@@ -10,6 +11,8 @@ from urllib import robotparser
 
 import httpx
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger("stock_monitor.adapters")
 
 USER_AGENT = "PokemonStockMonitorBot/0.2 (+read-only stock check; contact via operator)"
 
@@ -186,14 +189,23 @@ class GenericAdapter:
         for listing_url in self.config.get("listing_urls", []):
             html = self.fetch(listing_url)
             if not html:
+                logger.warning("%s: listing page fetch failed or blocked: %s", self.name, listing_url)
                 continue
             soup = BeautifulSoup(html, "lxml")
+            all_paths: set[str] = set()
             for a in soup.find_all("a", href=True):
                 href = a["href"]
                 absolute = urljoin(self.base_url, href)
                 path = urlparse(absolute).path
+                all_paths.add(path)
                 if self.product_url_pattern.search(path):
                     found.add(absolute.split("?")[0].split("#")[0])
+            if not any(self.product_url_pattern.search(p) for p in all_paths):
+                sample = sorted(all_paths)[:25]
+                logger.warning(
+                    "%s: product_url_pattern matched nothing on %s; sample of %d link paths seen: %s",
+                    self.name, listing_url, len(all_paths), sample,
+                )
         return sorted(found)
 
     def check(self, url: str) -> ProductRecord:
