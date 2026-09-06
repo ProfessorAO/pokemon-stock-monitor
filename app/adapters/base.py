@@ -229,12 +229,15 @@ def _dismiss_cookie_banner(page) -> None:
     widgets (Cookiebot, TrustArc, Quantcast) render inside an iframe, so
     every frame is checked, not just the main page.
     """
+    page.wait_for_timeout(1500)  # give the consent script time to inject its banner
     for frame in page.frames:
         for selector in _COOKIE_CONSENT_SELECTORS:
             try:
-                locator = frame.locator(selector).first
-                if locator.is_visible(timeout=1000):
-                    locator.click(timeout=1000)
+                # wait_for_selector actually waits/retries; is_visible() does not
+                # and will silently report false if the banner hasn't rendered yet.
+                handle = frame.wait_for_selector(selector, state="visible", timeout=800)
+                if handle:
+                    handle.click(timeout=1000)
                     return
             except Exception:
                 continue
@@ -244,12 +247,13 @@ def _dismiss_popups(page) -> None:
     """Dismiss a marketing/newsletter popup if one is present, same reasoning
     as the cookie banner -- ordinary interaction, not evasion. Falls back to
     pressing Escape, which closes most modal overlays regardless of markup."""
+    page.wait_for_timeout(1000)
     for frame in page.frames:
         for selector in _POPUP_DISMISS_SELECTORS:
             try:
-                locator = frame.locator(selector).first
-                if locator.is_visible(timeout=1000):
-                    locator.click(timeout=1000)
+                handle = frame.wait_for_selector(selector, state="visible", timeout=800)
+                if handle:
+                    handle.click(timeout=1000)
                     return
             except Exception:
                 continue
