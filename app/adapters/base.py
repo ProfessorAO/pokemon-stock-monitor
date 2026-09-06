@@ -421,7 +421,24 @@ class GenericAdapter:
         available = None
         sku = None
 
-        for product in extract_jsonld_products(soup):
+        jsonld_products = extract_jsonld_products(soup)
+        target_path = urlparse(url).path.rstrip("/")
+
+        def _is_current_page(product: dict) -> bool:
+            product_url = product.get("url")
+            if not product_url:
+                return False
+            return urlparse(urljoin(self.base_url, product_url)).path.rstrip("/") == target_path
+
+        # Pages often embed JSON-LD for more than just the product being viewed
+        # (e.g. a "related products" carousel) -- without this, the first
+        # Product block in the HTML wins even when it belongs to a different
+        # product than the URL being checked, silently attaching the wrong
+        # name/price/availability. Prefer the block whose own url matches the
+        # page being checked; fall back to document order when none declare one.
+        jsonld_products.sort(key=lambda p: not _is_current_page(p))
+
+        for product in jsonld_products:
             name = name or product.get("name")
             sku = sku or product.get("sku") or product.get("productID") or product.get("gtin13")
             offers = product.get("offers")
