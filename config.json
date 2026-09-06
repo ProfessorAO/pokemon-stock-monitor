@@ -105,23 +105,21 @@
     {
       "name": "aurora_sparks",
       "enabled": true,
-      "verified": false,
+      "verified": true,
       "base_url": "https://aurorasparks.myshopify.com",
       "listing_urls": [
         "https://aurorasparks.myshopify.com",
-        "https://aurorasparks.myshopify.com/collections/pokemon",
-        "https://aurorasparks.myshopify.com/collections/pokemon-tcg"
+        "https://aurorasparks.myshopify.com/collections/pokemon"
       ],
       "product_url_pattern": "^/products/[a-z0-9-]+$"
     },
     {
       "name": "john_lewis",
       "enabled": true,
-      "verified": false,
+      "verified": true,
       "base_url": "https://www.johnlewis.com",
       "listing_urls": [
-        "https://www.johnlewis.com/brand/pok%C3%A9mon/card-games/_/N-1z079nuZ1yze6yu",
-        "https://www.johnlewis.com/brand/pok%C3%A9mon/_/N-1z079nu"
+        "https://www.johnlewis.com/brand/pok%C3%A9mon/card-games/_/N-1z079nuZ1yze6yu"
       ],
       "product_url_pattern": "/p\\d+$"
     }
@@ -137,6 +135,8 @@
     "figure", "funko", "loungefly", "wallet", "cushion", "pyjamas",
     "onesie", "cap", "beanie", "umbrella", "lamp", "clock", "calendar",
     "jigsaw", "puzzle", "stationery", "notebook", "pencil case",
-    "lunch box", "water bottle", "handbag", "purse"
+    "lunch box", "water bottle", "handbag", "purse", "duvet",
+    "pillowcase", "bedding", "spinner", "soft toy", "toy set",
+    "roleplay", "costume"
   ]
 }
