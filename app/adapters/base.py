@@ -260,11 +260,27 @@ class GenericAdapter:
                 if self.product_url_pattern.search(path):
                     found.add(absolute.split("?")[0].split("#")[0])
             if not any(self.product_url_pattern.search(p) for p in all_paths):
-                sample = sorted(all_paths)[:25]
-                logger.warning(
-                    "%s: product_url_pattern matched nothing on %s; sample of %d link paths seen: %s",
-                    self.name, listing_url, len(all_paths), sample,
-                )
+                if not all_paths:
+                    title_tag = soup.find("title")
+                    title = title_tag.get_text(strip=True) if title_tag else None
+                    snippet = soup.get_text(" ", strip=True)[:300]
+                    logger.warning(
+                        "%s: zero links found at all on %s (page length %d, title=%r) -- "
+                        "likely a bot-challenge/interstitial page rather than the real "
+                        "listing, even under a rendered browser. Text snippet: %r",
+                        self.name, listing_url, len(html), title, snippet,
+                    )
+                else:
+                    interesting = sorted(
+                        p for p in all_paths
+                        if re.search(r"pok[eé]mon|tcg|trading-card", p, re.I)
+                    )
+                    sample = interesting[:25] if interesting else sorted(all_paths)[:25]
+                    logger.warning(
+                        "%s: product_url_pattern matched nothing on %s; %d total link paths, "
+                        "%d look pokemon/tcg-related; sample: %s",
+                        self.name, listing_url, len(all_paths), len(interesting), sample,
+                    )
         return sorted(found)
 
     def check(self, url: str) -> ProductRecord:
